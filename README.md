@@ -1,31 +1,55 @@
-# TECHSOLUTIONS - CONFIGURATIONS PRÉ-DÉFINIES
+# TechSolutions - Projet Complet
 
-## Concept
-Les clients achètent des **configurations PC complètes** adaptées à chaque service/département de l'entreprise.
+## 📋 Description
 
-## Services proposés
-1. **Développement logiciel** (2 configs : Standard, Performance)
-2. **Design UX/UI** (config Standard)
-3. **Marketing et vente** (config Standard)
-4. **Support Client** (config Standard)
-5. **Direction** (config Premium)
-6. **Infrastructure IT** (config Standard)
+Plateforme web complète pour TechSolutions, entreprise de 50 personnes spécialisée dans les solutions informatiques.
 
-## Installation
-1. XAMPP → Apache + MySQL
-2. Créer BDD `techsolutions`
-3. Importer `database.sql` (217 composants + 7 configurations)
-4. Accéder : http://localhost/techsolutions_v2/
+## 🎯 Contenu du Package
 
-## Identifiants
-Admin : admin / admin123
+✅ **Site web complet** avec admin  
+✅ **Base de données** (223 composants, 6 configurations)  
+✅ **Catalogue Excel** (223 produits)  
+✅ **Devis Excel** automatisé  
+✅ **Documentation** complète  
+✅ **Guides** utilisateur et admin  
 
-## Fonctionnalités
-✅ 7 configurations pré-définies
-✅ 217 composants du catalogue CSV
-✅ Détail complet de chaque configuration
-✅ Export devis CSV par configuration
-✅ Prix HT et TTC calculés automatiquement
-✅ Interface admin pour gérer les configurations
+## 🚀 Installation Rapide
 
-© 2025 TechSolutions
+1. Extraire → `C:\xampp\htdocs\techsolutions\`
+2. Créer base `techsolutions` dans phpMyAdmin
+3. Importer `database.sql`
+4. Accéder : `http://localhost/techsolutions/`
+5. Admin : `admin` / `admin123`
+
+## 📊 Configurations PC
+
+- PC Développement Pro (14 composants)
+- PC Design Graphique (18 composants)
+- PC Bureautique (13 composants)
+- PC Support + Accessibilité ♿ (14 composants)
+- PC Infrastructure IT (13 composants)
+- PC Direction (15 composants)
+
+**Total : 60 postes - 223 composants - 87 liaisons**
+
+## 📁 Fichiers Inclus
+
+- `database.sql` - Base de données complète
+- `Catalogue_Complet.xlsx` - 223 produits
+- `Devis_TechSolutions.xlsx` - Devis automatisé
+- `GUIDE_UTILISATEUR.pdf` - Guide utilisateur
+- `GUIDE_ADMIN.pdf` - Guide administrateur
+- Toute la documentation
+
+## 🔐 Identifiants
+
+**Admin** : `admin` / `admin123`
+
+## 📞 Support
+
+Email : contact@techsolutions.fr  
+Tél : 05 55 00 00 00
+
+---
+
+© 2025 TechSolutions - Version 1.0

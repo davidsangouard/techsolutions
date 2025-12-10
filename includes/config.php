@@ -4,7 +4,7 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'techsolutions');
 define('SITE_NAME', 'TechSolutions');
-define('TVA_RATE', 0.20);
+
 try {
     $pdo = new PDO("mysql:host=".DB_HOST.";dbname=".DB_NAME.";charset=utf8mb4", DB_USER, DB_PASS, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -12,7 +12,8 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false
     ]);
 } catch(PDOException $e) {
-    die("Erreur DB : " . $e->getMessage());
+    die("Erreur BDD: " . $e->getMessage());
 }
+
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 ?>

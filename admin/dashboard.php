@@ -1,2 +1,72 @@
-<?php require_once '../includes/config.php'; if (!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; } $stmt = $pdo->query("SELECT COUNT(*) as total FROM actualites"); $totalActualites = $stmt->fetch()['total']; $stmt = $pdo->query("SELECT COUNT(*) as total FROM contacts WHERE statut = 'nouveau'"); $nouveauxMessages = $stmt->fetch()['total']; $stmt = $pdo->query("SELECT COUNT(*) as total FROM composants"); $totalComposants = $stmt->fetch()['total']; ?>
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Dashboard - Admin</title><link rel="stylesheet" href="../css/style.css"></head><body><header><div class="header-content"><div class="logo"><h1>Admin - TechSolutions</h1></div><nav><ul><li><a href="dashboard.php">Tableau de bord</a></li><li><a href="actualites.php">Actualités</a></li><li><a href="contacts.php">Messages</a></li><li><a href="composants.php">Composants</a></li><li><a href="logout.php">Déconnexion</a></li></ul></nav></div></header><div class="container"><h2>Tableau de Bord</h2><p>Bienvenue, <?php echo htmlspecialchars($_SESSION['admin_username']); ?>!</p><div class="dashboard"><div class="stat-card"><h3><?php echo $totalActualites; ?></h3><p>Actualités</p></div><div class="stat-card"><h3><?php echo $nouveauxMessages; ?></h3><p>Nouveaux Messages</p></div><div class="stat-card"><h3><?php echo $totalComposants; ?></h3><p>Composants PC</p></div></div></div><footer><p>&copy; 2025 TechSolutions - Admin</p></footer></body></html>
+<?php
+require_once '../includes/config.php';
+if(!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; }
+$stats = [
+    'configs' => $pdo->query("SELECT COUNT(*) FROM configurations")->fetchColumn(),
+    'composants' => $pdo->query("SELECT COUNT(*) FROM composants")->fetchColumn(),
+    'services' => $pdo->query("SELECT COUNT(*) FROM services")->fetchColumn(),
+    'actualites' => $pdo->query("SELECT COUNT(*) FROM actualites")->fetchColumn(),
+    'messages' => $pdo->query("SELECT COUNT(*) FROM contacts WHERE lu = 0")->fetchColumn()
+];
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <div class="logo">
+            <img src="../images/logo/logo.png" alt="TechSolutions">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="dashboard.php">Dashboard</a></li>
+                <li><a href="configurations.php">Configurations</a></li>
+                <li><a href="services.php">Services</a></li>
+                <li><a href="actualites.php">Actualités</a></li>
+                <li><a href="contacts.php">Messages</a></li>
+                <li><a href="logout.php">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+<div class="container">
+    <h2 class="section-title">Tableau de bord</h2>
+    <p style="text-align:center;">Bienvenue, <?php echo htmlspecialchars($_SESSION['admin_username']); ?></p>
+    <div class="dashboard">
+        <div class="stat-card">
+            <h3><?php echo $stats['configs']; ?></h3>
+            <p>Configurations</p>
+        </div>
+        <div class="stat-card">
+            <h3><?php echo $stats['composants']; ?></h3>
+            <p>Composants</p>
+        </div>
+        <div class="stat-card">
+            <h3><?php echo $stats['services']; ?></h3>
+            <p>Services</p>
+        </div>
+        <div class="stat-card">
+            <h3><?php echo $stats['actualites']; ?></h3>
+            <p>Actualités</p>
+        </div>
+        <div class="stat-card">
+            <h3><?php echo $stats['messages']; ?></h3>
+            <p>Messages non lus</p>
+        </div>
+    </div>
+    <div class="content-box">
+        <h3>Actions rapides</h3>
+        <a href="configurations.php" class="btn">Gérer les configurations</a>
+        <a href="services.php" class="btn" style="margin-left:1rem;">Gérer les services</a>
+        <a href="actualites.php" class="btn" style="margin-left:1rem;">Gérer les actualités</a>
+        <a href="contacts.php" class="btn" style="margin-left:1rem;">Voir les messages</a>
+    </div>
+</div>
+<footer><p>&copy; 2025 TechSolutions</p></footer>
+</body>
+</html>
