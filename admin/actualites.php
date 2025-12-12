@@ -1,5 +1,7 @@
 <?php
 require_once '../includes/config.php';
+require_once '../includes/security.php';
+require_once '../includes/upload_securise.php';
 if(!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; }
 
 $message = '';
@@ -10,14 +12,11 @@ if(isset($_POST['create_actualite'])) {
     try {
         $image_path = null;
         if(isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-            $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            if(in_array($ext, $allowed)) {
-                $new_filename = uniqid() . '.' . $ext;
-                $upload_path = '../actualites/' . $new_filename;
-                if(move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-                    $image_path = 'actualites/' . $new_filename;
-                }
+            $upload_result = upload_image_securise($_FILES['image'], '../images/actualites');
+            if($upload_result['success']) {
+                $image_path = 'images/actualites/' . $upload_result['filename'];
+            } else {
+                throw new Exception($upload_result['error']);
             }
         }
         $visible = isset($_POST['visible']) ? 1 : 0;
@@ -25,7 +24,7 @@ if(isset($_POST['create_actualite'])) {
         $stmt->execute([trim($_POST['titre']), trim($_POST['contenu']), $image_path, trim($_POST['auteur']), $visible]);
         $message = "Actualité créée avec succès";
         $messageType = 'success';
-    } catch(PDOException $e) {
+    } catch(Exception $e) {
         $message = "Erreur: " . $e->getMessage();
         $messageType = 'error';
     }
@@ -37,17 +36,15 @@ if(isset($_POST['update_actualite'])) {
         $actu_id = (int)$_POST['actu_id'];
         $image_path = $_POST['current_image'];
         if(isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-            $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            if(in_array($ext, $allowed)) {
+            $upload_result = upload_image_securise($_FILES['image'], '../images/actualites');
+            if($upload_result['success']) {
+                // Supprimer ancienne image
                 if($image_path && file_exists('../' . $image_path)) {
-                    unlink('../' . $image_path);
+                    delete_image_securise('../' . $image_path);
                 }
-                $new_filename = uniqid() . '.' . $ext;
-                $upload_path = '../actualites/' . $new_filename;
-                if(move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-                    $image_path = 'actualites/' . $new_filename;
-                }
+                $image_path = 'images/actualites/' . $upload_result['filename'];
+            } else {
+                throw new Exception($upload_result['error']);
             }
         }
         $visible = isset($_POST['visible']) ? 1 : 0;
@@ -55,7 +52,7 @@ if(isset($_POST['update_actualite'])) {
         $stmt->execute([trim($_POST['titre']), trim($_POST['contenu']), $image_path, trim($_POST['auteur']), $visible, $actu_id]);
         $message = "Actualité mise à jour";
         $messageType = 'success';
-    } catch(PDOException $e) {
+    } catch(Exception $e) {
         $message = "Erreur: " . $e->getMessage();
         $messageType = 'error';
     }
@@ -237,6 +234,15 @@ if(isset($_GET['edit'])) {
     <?php endif; ?>
 </div>
 
-<footer><p>&copy; 2025 TechSolutions</p></footer>
+<footer>
+    <p>&copy; 2025 TechSolutions - Tous droits réservés</p>
+    <p style="font-size:0.9em;color:#0066CC;margin-top:0.5rem;">
+        Site web développé par <strong>Lumni</strong> - Digital Solutions Provider
+    </p>
+    <p style="font-size:0.85em;margin-top:0.5rem;">
+        <a href="../mentions_legales.php" style="color:#666;margin:0 1rem;">Mentions légales</a>
+        <a href="../politique_confidentialite.php" style="color:#666;margin:0 1rem;">Politique de confidentialité</a>
+    </p>
+</footer>
 </body>
 </html>

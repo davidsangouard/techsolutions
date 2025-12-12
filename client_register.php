@@ -1,23 +1,44 @@
 <?php 
 session_start();
 require_once 'includes/config.php';
+require_once 'includes/security.php';
 
 $message = '';
 $messageType = '';
 
 if(isset($_POST['register'])) {
     try {
-        // Validation
-        if(empty($_POST['nom']) || empty($_POST['prenom']) || empty($_POST['email']) || empty($_POST['password'])) {
-            throw new Exception("Tous les champs obligatoires doivent être remplis");
+        // Validation et nettoyage
+        $nom = clean_input($_POST['nom'] ?? '', 100);
+        $prenom = clean_input($_POST['prenom'] ?? '', 100);
+        $email = validate_email($_POST['email'] ?? '');
+        $telephone = clean_input($_POST['telephone'] ?? '', 20);
+        $entreprise = clean_input($_POST['entreprise'] ?? '', 200);
+        $adresse = clean_input($_POST['adresse'] ?? '', 300);
+        $ville = clean_input($_POST['ville'] ?? '', 100);
+        $code_postal = clean_input($_POST['code_postal'] ?? '', 10);
+        $password = $_POST['password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        
+        // Validations
+        if(strlen($nom) < 2) {
+            throw new Exception("Le nom doit contenir au moins 2 caractères");
         }
         
-        if($_POST['password'] !== $_POST['confirm_password']) {
-            throw new Exception("Les mots de passe ne correspondent pas");
+        if(strlen($prenom) < 2) {
+            throw new Exception("Le prénom doit contenir au moins 2 caractères");
         }
         
-        if(!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        if(!$email) {
             throw new Exception("Email invalide");
+        }
+        
+        if(strlen($password) < 8) {
+            throw new Exception("Le mot de passe doit contenir au moins 8 caractères");
+        }
+        
+        if($password !== $confirm_password) {
+            throw new Exception("Les mots de passe ne correspondent pas");
         }
         
         if(!isset($_POST['rgpd_consent'])) {
@@ -26,7 +47,7 @@ if(isset($_POST['register'])) {
         
         // Vérifier si email existe
         $stmt = $pdo->prepare("SELECT id FROM clients WHERE email = ?");
-        $stmt->execute([$_POST['email']]);
+        $stmt->execute([$email]);
         if($stmt->fetch()) {
             throw new Exception("Un compte existe déjà avec cet email");
         }
@@ -34,15 +55,15 @@ if(isset($_POST['register'])) {
         // Créer le compte
         $stmt = $pdo->prepare("INSERT INTO clients (nom, prenom, email, telephone, entreprise, adresse, ville, code_postal, password, rgpd_consent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
         $stmt->execute([
-            trim($_POST['nom']),
-            trim($_POST['prenom']),
-            trim($_POST['email']),
-            trim($_POST['telephone']),
-            trim($_POST['entreprise']),
-            trim($_POST['adresse']),
-            trim($_POST['ville']),
-            trim($_POST['code_postal']),
-            password_hash($_POST['password'], PASSWORD_DEFAULT)
+            $nom,
+            $prenom,
+            $email,
+            $telephone,
+            $entreprise,
+            $adresse,
+            $ville,
+            $code_postal,
+            password_hash($password, PASSWORD_DEFAULT)
         ]);
         
         $message = "Compte créé avec succès ! Vous pouvez maintenant vous connecter.";
@@ -165,7 +186,14 @@ if(isset($_POST['register'])) {
 </div>
 
 <footer>
-    <p>&copy; 2025 TechSolutions - Site réalisé par Lumni</p>
+    <p>&copy; 2025 TechSolutions - Tous droits réservés</p>
+    <p style="font-size:0.9em;color:#0066CC;margin-top:0.5rem;">
+        Site web développé par <strong>Lumni</strong> - Digital Solutions Provider
+    </p>
+    <p style="font-size:0.85em;margin-top:0.5rem;">
+        <a href="mentions_legales.php" style="color:#666;margin:0 1rem;">Mentions légales</a>
+        <a href="politique_confidentialite.php" style="color:#666;margin:0 1rem;">Politique de confidentialité</a>
+    </p>
 </footer>
 </body>
 </html>

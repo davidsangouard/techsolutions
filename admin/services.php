@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/config.php';
+require_once '../includes/security.php';
 if(!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; }
 
 $message = '';
@@ -192,6 +193,15 @@ if(isset($_GET['edit'])) {
     <?php endif; ?>
 </div>
 
-<footer><p>&copy; 2025 TechSolutions</p></footer>
+<footer>
+    <p>&copy; 2025 TechSolutions - Tous droits réservés</p>
+    <p style="font-size:0.9em;color:#0066CC;margin-top:0.5rem;">
+        Site web développé par <strong>Lumni</strong> - Digital Solutions Provider
+    </p>
+    <p style="font-size:0.85em;margin-top:0.5rem;">
+        <a href="../mentions_legales.php" style="color:#666;margin:0 1rem;">Mentions légales</a>
+        <a href="../politique_confidentialite.php" style="color:#666;margin:0 1rem;">Politique de confidentialité</a>
+    </p>
+</footer>
 </body>
 </html>

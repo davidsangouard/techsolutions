@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/config.php';
+require_once '../includes/upload_securise.php';
 
 // Vérifier connexion admin
 if(!isset($_SESSION['admin_id'])) {
@@ -14,10 +15,22 @@ $messageType = '';
 // Créer une configuration
 if(isset($_POST['create_config'])) {
     try {
-        $stmt = $pdo->prepare("INSERT INTO configurations (nom, description) VALUES (?, ?)");
+        // Upload image si présente
+        $image_path = null;
+        if(isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $upload_result = upload_image_securise($_FILES['image'], '../images/configurations');
+            if($upload_result['success']) {
+                $image_path = 'images/configurations/' . $upload_result['filename'];
+            } else {
+                throw new Exception($upload_result['error']);
+            }
+        }
+        
+        $stmt = $pdo->prepare("INSERT INTO configurations (nom, description, image_path) VALUES (?, ?, ?)");
         $stmt->execute([
             trim($_POST['nom']),
-            trim($_POST['description'])
+            trim($_POST['description']),
+            $image_path
         ]);
         
         $config_id = $pdo->lastInsertId();
@@ -33,10 +46,26 @@ if(isset($_POST['create_config'])) {
 // Modifier une configuration
 if(isset($_POST['update_config'])) {
     try {
-        $stmt = $pdo->prepare("UPDATE configurations SET nom=?, description=? WHERE id=?");
+        // Upload nouvelle image si présente
+        $image_path = $_POST['current_image'] ?? null;
+        if(isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $upload_result = upload_image_securise($_FILES['image'], '../images/configurations');
+            if($upload_result['success']) {
+                // Supprimer ancienne image
+                if($image_path && file_exists('../' . $image_path)) {
+                    delete_image_securise('../' . $image_path);
+                }
+                $image_path = 'images/configurations/' . $upload_result['filename'];
+            } else {
+                throw new Exception($upload_result['error']);
+            }
+        }
+        
+        $stmt = $pdo->prepare("UPDATE configurations SET nom=?, description=?, image_path=? WHERE id=?");
         $stmt->execute([
             trim($_POST['nom']),
             trim($_POST['description']),
+            $image_path,
             $_POST['config_id']
         ]);
         
@@ -67,14 +96,41 @@ if(isset($_POST['delete_config'])) {
 // Ajouter un composant à une configuration
 if(isset($_POST['add_composant'])) {
     try {
+        $config_id = (int)$_POST['config_id'];
+        $composant_id = (int)$_POST['composant_id'];
+        $quantite = (int)$_POST['quantite'];
+        
+        if ($quantite < 1) {
+            throw new Exception("La quantité doit être au moins 1");
+        }
+        
         $stmt = $pdo->prepare("INSERT INTO configuration_composants (config_id, composant_id, quantite) VALUES (?, ?, ?)");
-        $stmt->execute([
-            $_POST['config_id'],
-            $_POST['composant_id'],
-            (int)$_POST['quantite']
-        ]);
+        $stmt->execute([$config_id, $composant_id, $quantite]);
         
         $message = "Composant ajouté !";
+        $messageType = 'success';
+        
+    } catch(Exception $e) {
+        $message = "Erreur : " . $e->getMessage();
+        $messageType = 'error';
+    }
+}
+
+// Modifier la quantité d'un composant
+if(isset($_POST['update_quantite'])) {
+    try {
+        $config_id = (int)$_POST['config_id'];
+        $composant_id = (int)$_POST['composant_id'];
+        $quantite = (int)$_POST['quantite'];
+        
+        if ($quantite < 1) {
+            throw new Exception("La quantité doit être au moins 1");
+        }
+        
+        $stmt = $pdo->prepare("UPDATE configuration_composants SET quantite = ? WHERE config_id = ? AND composant_id = ?");
+        $stmt->execute([$quantite, $config_id, $composant_id]);
+        
+        $message = "Quantité mise à jour !";
         $messageType = 'success';
         
     } catch(Exception $e) {
@@ -86,8 +142,11 @@ if(isset($_POST['add_composant'])) {
 // Supprimer un composant
 if(isset($_POST['delete_composant'])) {
     try {
-        $stmt = $pdo->prepare("DELETE FROM configuration_composants WHERE id = ?");
-        $stmt->execute([$_POST['liaison_id']]);
+        $config_id = (int)$_POST['config_id'];
+        $composant_id = (int)$_POST['composant_id'];
+        
+        $stmt = $pdo->prepare("DELETE FROM configuration_composants WHERE config_id = ? AND composant_id = ?");
+        $stmt->execute([$config_id, $composant_id]);
         
         $message = "Composant supprimé !";
         $messageType = 'success';
@@ -162,8 +221,9 @@ if(isset($_GET['edit'])) {
         <div class="content-box">
             <h3>Éditer la configuration : <?php echo htmlspecialchars($editing_config['nom']); ?></h3>
             
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="config_id" value="<?php echo $editing_config['id']; ?>">
+                <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($editing_config['image_path'] ?? ''); ?>">
                 
                 <div class="form-group">
                     <label>Nom de la configuration</label>
@@ -173,6 +233,16 @@ if(isset($_GET['edit'])) {
                 <div class="form-group">
                     <label>Description</label>
                     <textarea name="description" rows="3" required><?php echo htmlspecialchars($editing_config['description']); ?></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Image de la configuration</label>
+                    <?php if($editing_config['image_path']): ?>
+                        <img src="../<?php echo htmlspecialchars($editing_config['image_path']); ?>" style="max-width:200px;display:block;margin:0.5rem 0;">
+                        <small>Uploader une nouvelle image pour remplacer</small>
+                    <?php endif; ?>
+                    <input type="file" name="image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                    <small>Formats acceptés: JPG, PNG, GIF, WEBP (max 5 MB)</small>
                 </div>
                 
                 <button type="submit" name="update_config" class="btn">Mettre à jour</button>
@@ -209,12 +279,20 @@ if(isset($_GET['edit'])) {
                             <td><?php echo htmlspecialchars($comp['categorie']); ?></td>
                             <td><?php echo htmlspecialchars($comp['reference']); ?></td>
                             <td><?php echo htmlspecialchars($comp['libelle']); ?></td>
-                            <td><?php echo $comp['quantite']; ?></td>
+                            <td>
+                                <form method="POST" style="display:inline-flex;align-items:center;gap:0.5rem;">
+                                    <input type="hidden" name="config_id" value="<?php echo $editing_config['id']; ?>">
+                                    <input type="hidden" name="composant_id" value="<?php echo $comp['composant_id']; ?>">
+                                    <input type="number" name="quantite" value="<?php echo $comp['quantite']; ?>" min="1" max="999" style="width:60px;" required>
+                                    <button type="submit" name="update_quantite" class="btn-small" style="padding:0.25rem 0.5rem;">✓</button>
+                                </form>
+                            </td>
                             <td><?php echo number_format($comp['prix_ht'], 2, ',', ' '); ?> €</td>
                             <td><?php echo number_format($comp['total_ht'], 2, ',', ' '); ?> €</td>
                             <td>
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Supprimer ?');">
-                                    <input type="hidden" name="liaison_id" value="<?php echo $comp['composant_id']; ?>">
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Supprimer ce composant ?');">
+                                    <input type="hidden" name="config_id" value="<?php echo $editing_config['id']; ?>">
+                                    <input type="hidden" name="composant_id" value="<?php echo $comp['composant_id']; ?>">
                                     <button type="submit" name="delete_composant" class="btn-delete btn-small">Supprimer</button>
                                 </form>
                             </td>
@@ -277,7 +355,7 @@ if(isset($_GET['edit'])) {
         <div class="content-box">
             <h3>Créer une nouvelle configuration</h3>
             
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Nom de la configuration</label>
                     <input type="text" name="nom" placeholder="Ex: PC Développement Pro" required>
@@ -286,6 +364,12 @@ if(isset($_GET['edit'])) {
                 <div class="form-group">
                     <label>Description</label>
                     <textarea name="description" rows="3" placeholder="Description de la configuration..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Image de la configuration</label>
+                    <input type="file" name="image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                    <small>Formats acceptés: JPG, PNG, GIF, WEBP (max 5 MB)</small>
                 </div>
                 
                 <button type="submit" name="create_config" class="btn">Créer la configuration</button>
@@ -329,7 +413,14 @@ if(isset($_GET['edit'])) {
 </div>
 
 <footer>
-    <p>&copy; 2025 TechSolutions - Administration</p>
+    <p>&copy; 2025 TechSolutions - Tous droits réservés</p>
+    <p style="font-size:0.9em;color:#0066CC;margin-top:0.5rem;">
+        Site web développé par <strong>Lumni</strong> - Digital Solutions Provider
+    </p>
+    <p style="font-size:0.85em;margin-top:0.5rem;">
+        <a href="../mentions_legales.php" style="color:#666;margin:0 1rem;">Mentions légales</a>
+        <a href="../politique_confidentialite.php" style="color:#666;margin:0 1rem;">Politique de confidentialité</a>
+    </p>
 </footer>
 </body>
 </html>

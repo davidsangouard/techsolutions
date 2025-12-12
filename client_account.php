@@ -1,6 +1,7 @@
 <?php 
 session_start();
 require_once 'includes/config.php';
+require_once 'includes/security.php';
 
 // Vérifier connexion
 if(!isset($_SESSION['client_id'])) {
@@ -244,7 +245,14 @@ if(isset($_GET['logout'])) {
 </div>
 
 <footer>
-    <p>&copy; 2025 TechSolutions - Site réalisé par Lumni</p>
+    <p>&copy; 2025 TechSolutions - Tous droits réservés</p>
+    <p style="font-size:0.9em;color:#0066CC;margin-top:0.5rem;">
+        Site web développé par <strong>Lumni</strong> - Digital Solutions Provider
+    </p>
+    <p style="font-size:0.85em;margin-top:0.5rem;">
+        <a href="mentions_legales.php" style="color:#666;margin:0 1rem;">Mentions légales</a>
+        <a href="politique_confidentialite.php" style="color:#666;margin:0 1rem;">Politique de confidentialité</a>
+    </p>
 </footer>
 </body>
 </html>
